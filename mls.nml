@@ -1,0 +1,513 @@
+!
+! description of namelist controls and parameters
+!
+! notations:
+!   '+': obligatory
+!   '-': optional
+!   '*': default
+
+&RUN_CTL
+! this section controls which module should be used
+! only kerstin's ipt for now
+!
+!+runmode
+!   = 1    module kerstin ipt
+  runmode=1,
+/
+
+&RRTMG_CTL
+! this section controls rrtmg behaviors
+! please consult rrtmg doc for the following flags
+!
+!+icld
+!+inflglw 
+!+iceflglw
+!+liqflglw
+!+inflgsw 
+!+iceflgsw
+!+liqflgsw
+  icld      = 2,
+  inflglw   = 2,
+  iceflglw  = 1,  !Ebert and Curry parameterization
+!+liqflglw
+!+inflgsw 
+!+iceflgsw
+!+liqflgsw
+  icld      = 2, !maximum/random overlap assumed
+  inflglw   = 2,
+  iceflglw  = 1,
+  liqflglw  = 1, !Hu and Stamnes parameterization
+  inflgsw   = 2, !
+  iceflgsw  = 1,
+  liqflgsw  = 1,
+/
+
+&IPT_CTL
+! this section controls the inputs for ipt
+!
+! in general
+! case(-1) -> do nothing/inactivate
+! case( 0) -> reserved for ref atmosphere
+! case( 1) -> read from given profile
+! case( 2) -> read from input netcdf file 
+!
+! you can drive the program by purely specifying the data in the IPT_PROFILE
+! section or just override some values only using these flags
+!
+!
+!-nc_ifile
+!   specify the input ipt netcdf file (kerstin). 
+!   if this is set to an empty string, then all needed fields are read from
+!   the IPT_PROFILE section.    
+!   = ''    null
+nc_ifile    = '/home/kebell/lehre/metrad/input_rrtmg_emptyarrays.nc',!/work/kebell/rrtmg/input/cloudnet/a1/20070404_input_rad_cloudnet_a1.nc',
+!+nc_ofile
+!   specify the output netcdf file
+!   = ''    null 
+  nc_ofile    = '/home/kebell/lehre/metrad/output_rrtmg/test.nc',
+
+!-iflag_refatm
+!   switch of predefined reference atmopheric profiles
+!   = 1   tropical
+!   = 2   mid latitude summer
+!   = 3   mid latitude winter
+!   = 4   subarctic summer
+!   = 5   subartic winter
+!   = 6*  u.s. standard 1976
+  iflag_refatm        =  2,
+
+
+!-iflag_pres
+!   switch of full level pressure input
+!     = 1   use 'pres' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'p_fl'
+!     = 3   read from nc_ifile, variable 'p0_fl'
+  iflag_pres          =  1,
+
+
+!-iflag_pres_h
+!   switch of half level pressure input
+!     = 1   use 'pres_h' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'p_hl'
+!     = 3   read from nc_ifile, variable 'p0_hl'
+  iflag_pres_h        =  1,
+
+
+!-iflag_temp
+!   switch of full level temperature input
+!     = 1   use 'temp' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'T_fl'
+!     = 3   read from nc_ifile, variable 'T_fl' (redundant for symmetry)
+  iflag_temp          =  1,
+
+
+!-iflag_temp_h
+!   switch of half level temperature input
+!     = 1   use 'temp' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'T_hl'
+!     = 3   read from nc_ifile, variable 'T_p0hl'
+  iflag_temp_h        =  1,
+
+
+!-iflag_temp_sfc
+!   switch of surface temperature input   
+!     = 1 use 'temp_sfc' given in IPT_PROFILE
+!     = 2 read from nc_ifile, variable 'T_sfc'
+  iflag_temp_sfc      =  1,
+
+
+!-iflag_temp_sfc2h
+!   switch of temperature continuity at the lowest half level and surface
+!   (editorial: confusing variable name, but it won't compile with a longer 
+!   name with some compiler. possbilly bug as fortran allows up to 32 chars.
+!     =-1   do nothing
+!     = 1   tsfc = tlev
+!     = 2   tlev = tsfc
+  iflag_temp_sfc2h    =  1,
+
+
+!-iflag_temp_corr
+!   switch if temperature at the lowest full level should be corrected
+!   only effective if iflag_temp_sfc2h = 2
+!      =-1  do nothing
+!      = 1  do correction (linear interpolation)
+  iflag_temp_corr     =  -1,
+
+
+!-iflag_clc
+!   switch of cloud cover input
+!     =-1   turn off, clc = 0
+!     = 1   use 'clc' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'clc_fl' 
+  iflag_clc           =  1,
+
+
+!-iflag_lwp
+!   switch of of lwp input 
+!     =-1   turn off, lwp = 0
+!     = 1   use 'lwp' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'lwp_fl'
+  iflag_lwp           =  1,
+
+
+!-iflag_iwp
+!   switch of iwp input
+!     =-1   turn off, iwp = 0
+!     = 1   use 'iwp' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'iwp_fl' 
+  iflag_iwp           =  1,
+  
+
+!-iflag_re_liq
+!   switch of effective liqud water radius input
+!     =-1   turn off, re_liq = 0
+!     = 1   use 're_liq' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'reff_liq_fl' 
+  iflag_re_liq        =  1,
+
+
+!-iflag_re_ice
+!   switch of effective ice radius input
+!     =-1   turn off, re_ice = 0
+!     = 1   use 're_ice' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'reff_ice_fl' 
+  iflag_re_ice        =  1,
+
+
+!-iflag_h2o_vmr
+!   switch of h2o volume mixing ratio input
+!     =-1   turn off, h2o_vmr = 0
+!     = 0   use ref atmosphere (iflag_refatm), interpolated exponentially
+!     = 1   use 'h2o_vmr' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'q_fl' 
+  iflag_h2o_vmr       =  1,
+
+
+!-iflag_co2_vmr
+!   switch of co2 volume mixing ratio input
+!     =-1   turn off, co2_vmr = 0
+!     = 0   use ref atmosphere (iflag_refatm), interpolated exponentially
+!     = 1   use 'co2_vmr' given in IPT_PROFILE
+  iflag_co2_vmr       =  0,
+  
+
+!-iflag_o3_vmr
+!   switch of o3 volume mixing ratio input
+!     =-1   turn off, o3_vmr = 0
+!     = 0   use ref atmosphere (iflag_refatm), interpolated exponentially
+!     = 1   use 'o3_vmr' given in IPT_PROFILE
+!     = 2   invalid
+!     = 3   vertically scaled o3 after cosmo model
+  iflag_o3_vmr        =  0,
+
+
+!-iflag_n2o_vmr
+!   switch of n2o volume mixing ratio input
+!     =-1   turn off, n2o_vmr = 0
+!     = 0   use ref atmosphere (iflag_refatm), interpolated exponentially
+!     = 1   use 'n2o_vmr' given in IPT_PROFILE
+  iflag_n2o_vmr       = 0,
+
+
+!-iflag_ch4_vmr
+!   switch of ch4 volume mixing ratio input
+!     =-1   turn off, ch4_vmr = 0
+!     = 0   use ref atmosphere (iflag_refatm), interpolated exponentially
+!     = 1   use 'ch4_vmr' given in IPT_PROFILE
+  iflag_ch4_vmr       = 0,
+
+
+!-iflag_o2_vmr
+!   switch of o2 volume mixing ratio input
+!     =-1   turn off, o2_vmr = 0
+!     = 0   use ref atmosphere (iflag_refatm), interpolated exponentially
+!     = 1   use 'o2_vmr' given in IPT_PROFILE
+  iflag_o2_vmr        = 0,
+
+!-iflag_height
+!   switch for auxiliary info of full/half level heights 
+  iflag_height   = 2,
+  iflag_height_h = 2,
+
+
+!-iflag_emissivity
+!   switch of emissivity input
+!     =-1   emissivity = 1
+!     = 0   emissivity = 0.996
+!     = 1   use 'emissivity' given in IPT_PROFILE
+  iflag_emissivity    =  0,
+  
+
+!-iflag_julian_day
+!   switch of julian day input
+!     = 1   use 'julian_day' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'jdyear' 
+  iflag_julian_day    =  1,
+  
+
+!-iflag_solarc
+!   switch of solar constant input
+!     = 0   rrtmg internal constant
+!     = 1   use 'solarc' given in IPT_PROFILE
+  iflag_solarc        =  1,
+  
+
+!-iflag_solarc_adj
+!   switch of solar constant adjusting factor input
+!     = 1   use 'solarc_adj' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'zsocof' 
+  iflag_solarc_adj    =  1,
+  
+
+!-iflag_cos_zenith
+!   switch of cosine of zenith input
+!     = 1   use 'cos_zenith' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'coszenith' 
+  iflag_cos_zenith    =  1,
+
+
+!-iflag_alb_dir_uv
+!   switch of direct albedo UV input
+!     = 1   use 'alb_dir_uv' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'alb_dir_amf' 
+  iflag_alb_dir_uv    =  1,
+
+
+!-iflag_alb_dif_uv
+!   switch of diffuse albedo UV input
+!     = 1   use 'alb_dif_uv' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'alb_dif_amf' 
+  iflag_alb_dif_uv    =  1,
+
+
+!-iflag_alb_dir_nir
+!   switch of direct albedo near IR input
+!     = 1   use 'alb_dir_nir' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'alb_dir_amf' 
+  iflag_alb_dir_nir   =  1,
+  
+
+!-iflag_alb_dif_nir
+!   switch of diffuse albedo near IR input
+!     = 1   use 'alb_dif_nir' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variable 'alb_dif_amf' 
+  iflag_alb_dif_nir   =  1,
+
+!-iflag_aerosol
+!   switch of aerosol input
+!     = 1   use 'tau_aero_sw','ssa_aero_sw' ,'asm_aero_sw', 'tau_aero_lw' given in IPT_PROFILE
+!     = 2   read from nc_ifile, variables  'tau_aerosol_sw','ssa_aerosol_sw' ,'asm_aerosol_sw', 'tau_aerosol_lw' 
+  iflag_aerosol   =  2,
+
+
+/
+
+&IPT_PROFILE
+! this section specifies details and data of the profile(s) (mostly optional)
+!
+
+!-nlevels
+!   number of full levels, if -1 is specified, nlevel will be determined by 
+!   the necdf dimension, otherwise a max of 200 (max limit)
+  nlevels = 26,!-1,
+
+
+!-ilevel_start
+!   specify the starting index of levels. data will be read from ileve_start
+!   for nlevels
+  ilevel_start = 1,
+
+
+!-ltop_down
+!   flag a top-down or bottom-up level gestalt, uh.. gravitational top-down..
+  ltop_down = .FALSE.,
+
+!-ntimes
+! how many profiles (time series). default is all (ntimes = -1)
+  ntimes = 1,
+
+!-itime_start
+! specify the starting index of the time series. defaul is one. data will
+! be processed from itime_start for ntimes.
+  itime_start = 1,
+
+!-scaling_*
+! scaling factor of input data, respectively. default is 1.
+!
+! usage by example:
+!
+!   rrtmg needs pressure in hPa. the 'pres' data (see below) is given in Pa.
+!   therefore the scaling factor should be 1.e-2. this also applies to data
+!   read from the netcdf file.
+!
+  scaling_pres      = 1.,!1.e-2,
+  scaling_pres_h    = 1.,!e-2,
+  scaling_temp      = 1.,
+  scaling_temp_h    = 1.,
+  scaling_temp_sfc  = 1.,
+  scaling_lwp       = 1.e0,
+  scaling_iwp       = 1.e0,
+  scaling_re_liq    = 1.,
+  scaling_re_ice    = 1.,
+  scaling_h2o_vmr   = 1.6077, !1.6077 to convert specific humidity (kg/kg) to volume mixin ratio
+  scaling_co2_vmr   = 1.,
+  scaling_o3_vmr    = 1.,
+  scaling_n2o_vmr   = 1.,
+  scaling_ch4_vmr   = 1.,
+  scaling_o2_vmr    = 1.,
+  scaling_height    = 1.,
+  scaling_height_h  = 1.,
+
+!-offset_*
+! offset of input data, respectively, default is 0
+  offset_pres       = 0.,
+  offset_pres_h     = 0.,
+  offset_temp       = 0.,
+  offset_temp_h     = 0.,
+  offset_temp_sfc   = 0.,
+  offset_lwp        = 0.,
+  offset_iwp        = 0.,
+  offset_re_liq     = 0.,
+  offset_re_ice     = 0.,
+  offset_h2o_vmr    = 0.,
+  offset_co2_vmr    = 0.,
+  offset_o3_vmr     = 0.,
+  offset_n2o_vmr    = 0.,
+  offset_ch4_vmr    = 0.,
+  offset_o2_vmr     = 0.,
+  offset_height     = 0.,
+  offset_height_h   = 0.,  
+  
+
+! below here are designated profile data. they are only effective if they
+! are switched on (see section IPT_CTL)
+!
+! a max of 200 values can be set in the profile. if only 20 values are given
+! 180 will be zero. therefore, you should always check nlevels and 
+! ilevel_start. if you'd like to init the array with the some values you 
+! can use the following syntax:
+!
+! 200*your_value        -> whole array will be the same
+! 198*your_value, 1, 2  -> the array has same 198 values, the last 2 are 1, 2
+!
+! and don't forget the trailing comma if there are more following terms.
+!
+!=======================================================================
+! units below are rrtmg requirements. not the units of the numbers given 
+!=======================================================================
+
+! pressure at full levels, hPa
+   pres =  955.8902, 850.5316, 754.5992, 667.7425, 589.8407, 519.4208, 455.4800,
+   398.0854, 347.1714, 301.7350, 261.3102, 225.3597, 193.4192, 165.4902, 141.0319,
+   120.1249, 102.6889, 87.8294, 75.1226, 64.3059, 55.0863, 47.2091, 40.5354, 34.7954,
+   29.8654, 22.9835,
+
+! pressure at half levels, hPa
+   pres_h = 1013.000, 902.000, 802.000, 710.000, 628.000, 554.000, 487.000, 426.000, 
+   372.000, 324.000, 281.000, 243.000, 209.000, 179.000, 153.000, 130.000, 111.000,
+   95.000, 81.200, 69.500, 59.500, 51.000, 43.700, 37.600, 32.200, 27.700, 19.070,
+
+! temperature at full levels, K  
+   temp =  291.950, 287.450, 282.200, 276.200, 270.200, 264.200, 257.950, 251.450, 
+   244.950, 238.500, 232.050, 225.550, 219.050, 215.750, 215.700, 215.700, 215.700,
+   216.250, 217.350, 218.550, 219.800, 221.000, 222.200, 223.350, 224.500, 226.775,
+
+! temperature at half levels, K
+  temp_h =  294.200, 289.700, 285.200, 279.200, 273.200, 267.200, 261.200, 254.700, 
+  248.200, 241.700, 235.300, 228.800, 222.300, 215.800, 215.700, 215.700, 215.700,
+  215.700, 216.800, 217.900, 219.200, 220.400, 221.600, 222.800, 223.900, 225.100, 228.450,
+
+! tempearture at surface, K
+  temp_sfc = 294.2,
+
+! in-cloud lwp, g m-2
+   lwp = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 
+    
+! in-cloud iwp, g m-2
+   iwp = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 
+
+! cloud cover, -
+   clc = 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0 ,0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0,
+
+! effective radius, micron  
+  re_liq = 0, 0, 5, 0, 0, 5, 0, 0, 0, 0, 0 ,0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0,
+
+! effective radius ice, micron  
+   re_ice = 0, 0, 0, 0, 0, 30, 0, 0, 0, 0, 0 ,0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0,
+
+! h2o volume mixing ratio (values below are specific humidity in kg/kg --> set scaling_h2o_vmr to 1.6077)
+   h2o_vmr = 0.0101199, 0.0072961, 0.0048715, 0.0030469, 0.0018778, 0.0011616, 0.0007868,
+    0.0005183, 0.0003294, 0.0002053, 0.0001066, 0.0000389, 0.0000116, 0.0000040, 0.0000026,
+    0.0000021, 0.0000020, 0.0000020, 0.0000020, 0.0000020, 0.0000021, 0.0000022, 0.0000023, 
+    0.0000024, 0.0000026, 0.0000027,
+
+!co2_vmr = 800*280e-6,
+!   o3_vmr = 26*0.,
+!  n2o_vmr = 650*0.32e-6 ,
+!  ch4_vmr= 650*1.60e-6,
+!  o2_vmr= 650*209480e-6,,
+  
+! emissivity
+!  emissivity = 40*.996,
+
+! if solar constant and its adjustment are given, i.e. not equal to zero,  
+! they will used. otherwise the julian day and the internal solar constant
+! are used to calculate solar energy flux at the upper bound.
+
+! solar constant, W m-2
+  solarc = 1368.,
+
+! solar constant adjustment
+   solarc_adj = 1.,
+   
+! julian day  
+   julian_day = 251,
+
+! cosine of angle to zenith 
+   cos_zenith = 0.7, 
+
+! direct albedo UV
+   alb_dir_uv = 0.2,
+
+! diffuse albedo UV
+   alb_dif_uv = 0.2,
+
+! direct albedo near IR
+   alb_dir_nir = 0.2,
+
+! diffuse albedo near IR
+   alb_dif_nir = 0.2,
+
+! aerosol optical thickness UV
+!   tau_aero_sw =  ,
+
+! single scattering albedo UV
+!  ssa_aero_sw = ,
+
+! asymmetry parameter UV
+!   asm_aero_sw = ,
+
+! aerosol optical thickness IR
+!   tau_aero_lw = ,
+
+! auxilary full level heights
+   height =   500., 1500., 2500., 3500., 4500., 5500., 6500., 7500., 8500., 9500.,
+   10500., 11500., 12500., 13500., 14500., 15500., 16500., 17500., 18500., 19500., 
+   20500., 21500., 22500., 23500., 24500., 26250.,
+
+! auxiliary half level heights
+   height_h =  0., 1000., 2000., 3000., 4000., 5000., 6000., 7000., 8000., 9000.,
+   10000., 11000., 12000., 13000., 14000., 15000., 16000., 17000., 18000., 19000., 
+   20000., 21000., 22000., 23000., 24000., 25000., 27500.,
+
+/
