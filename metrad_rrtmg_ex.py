@@ -15,12 +15,12 @@ import plot_styles as pls
 
 def main():
     
-    path_data = {'tcars_data': "/mnt/d/heavy_data/share_data_TCARS_example/",
+    path_data = {'tcars_data': "/mnt/f/heavy_data/share_data_TCARS_example/",
                  }
-    path_output = "/mnt/d/heavy_data/METRAD_WS2526/rrtmg_output/"
-    path_plots = "/mnt/d/Studium_NIM/work/Plots/METRAD_WS2526/"
+    path_output = "/mnt/f/heavy_data/METRAD_WS2526/rrtmg_output/"
+    path_plots = "/mnt/f/Studium_NIM/work/Plots/METRAD_WS2526/"
     
-    set_dict = {'save_figures': True,       # if True: plot is only saved to file, not shown
+    set_dict = {'save_figures': False,       # if True: plot is only saved to file, not shown
                 }
     
     # scaling: to scale the parameters in read_default_profiles
@@ -66,8 +66,8 @@ def main():
     tcars_client = tcars(path_tcars_data=path_data['tcars_data'], DS=DS)
 
 
-    suffix = "_q11"
-    subtask = "a"
+    suffix = "_q01"
+    subtask = ""            # e.g., "a", "b", ...
     
     # DATA MODIFICATIONS:
     tcars_client.iflag_co2_vmr = 0      # adjust for question 02; for valid values, see tcars.py.__init__
@@ -75,7 +75,10 @@ def main():
     # for var in ['alb_dir_uv', 'alb_dif_uv', 'alb_dir_nir', 'alb_dif_nir']:    # question 05
     #     tcars_client.DS[var][:] = 0.3           # question 05
     
-    cloudtypes = ['ice', 'liquid']
+    cloudtypes = []     # for questions 6-9, use ['liquid']
+                        # for question 10: use ['ice']
+                        # for question 11: use ['liquid', 'ice']
+                        # for questions 12-14: use whatever required of the task
     new_cloud_vars, cloudvar = define_cloud(cloudtypes)
 
     OUT_DS_list = list()
@@ -94,7 +97,7 @@ def main():
         OUT_DS = compute_radiative_flux_products(tcars_client.OUT_DS)
         OUT_DS_list.append(OUT_DS)
         
-        if np.any(np.abs(new_cloud_vars[cloudvar][k] - np.array([30., 100., 500.])) == 0.):
+        if np.any(np.abs(new_cloud_vars[cloudvar][k] - np.array([0., 30., 100., 500.])) == 0.):
             subtask = pls.panel_marker[count]
             print(f"TASK{suffix}{subtask}\nBudget surface: {OUT_DS.NET_SFC:.1f} W m-2\n" +
                   f"Budget TOA: {OUT_DS.NET_TOA:.1f} W m-2\nBudget atmosphere: {OUT_DS.NET_ATM:.1f} W m-2\n")
@@ -126,12 +129,30 @@ def define_cloud(cloudtypes: list):
     cloudvars = {'liquid': 'lwp', 'ice': 'iwp'}
     re_cloud = {'lwp': 're_liq', 'iwp': 're_ice'}
     re_value = {'liquid': 5., 'ice': 30.}
+    
+    def fill_cloud_data(
+        new_cloud_vars: dict, 
+        cloudvar: str, 
+        lwp_iwp_lim=500.1, 
+        cloud_fraction=1., 
+        re_=5.):
+        
+        new_cloud_vars[cloudvar] = np.arange(0., lwp_iwp_lim, 10.)
+        new_cloud_vars['clc'] = np.full(new_cloud_vars[cloudvar].shape, cloud_fraction)
+        new_cloud_vars[re_cloud[cloudvar]] = np.full(new_cloud_vars[cloudvar].shape, re_)
+        
+        return new_cloud_vars
+        
     new_cloud_vars = dict()
     for cloudtype in cloudtypes:
         cloudvar = cloudvars[cloudtype]
-        new_cloud_vars[cloudvar] = np.arange(0., 500.1, 10.)
-        new_cloud_vars['clc'] = np.full(new_cloud_vars[cloudvar].shape, 1.)
-        new_cloud_vars[re_cloud[cloudvar]] = np.full(new_cloud_vars[cloudvar].shape, re_value[cloudtype])
+        new_cloud_vars = fill_cloud_data(new_cloud_vars, cloudvar, lwp_iwp_lim=500.1, cloud_fraction=1.,
+                                         re_=re_value[cloudtype])
+        
+    if len(cloudtypes) == 0:        # no cloud
+        cloudvar = 'lwp'
+        new_cloud_vars = fill_cloud_data(new_cloud_vars, cloudvar, lwp_iwp_lim=0.1, cloud_fraction=0.,
+                                         re_=0.)
         
     return new_cloud_vars, cloudvar
     

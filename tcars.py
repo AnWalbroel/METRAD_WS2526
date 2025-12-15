@@ -11,6 +11,7 @@ import pyrrtmg as rrtmg
 import constants
 from data_tools import encode_time
 from readers_writers import import_vmr_std_atm, import_trace_gas_csv
+from met_tools import rho_air, h2ovmr_to_q, convert_spechum_to_abshum, compute_heating_rate
 
 
 class tcars:
@@ -59,7 +60,7 @@ class tcars:
         # 1: use values given in DS
         self.iflag_h2o_vmr = 1
         self.iflag_co2_vmr = 0      # additional option: 2: use NOAA measurements
-        self.iflag_o3_vmr = 1
+        self.iflag_o3_vmr = 0
         self.iflag_n2o_vmr = 1      # additional option: 2: use NOAA measurements
         self.iflag_ch4_vmr = 1      # additional option: 2: use NOAA measurements
         self.iflag_o2_vmr = 1
@@ -349,7 +350,7 @@ class tcars:
         reic_msg = ("Effective radius of ice particles seems out of valid bounds [13, 130] um " +
                     "(or 0 um for cloudfree height layers).")
         assert np.all((self.rrtmg_input['reic'] >= 0.) & (self.rrtmg_input['reic'] <= 130.)), reic_msg
-        
+    
     
     def organise_output(self):
         
@@ -366,6 +367,19 @@ class tcars:
             elif flx.shape == shape_lev:
                 dims_list.append('height_h')
             self.OUT_DS[var] = xr.DataArray(flx, dims=dims_list)
+            
+            
+        # pyRRTMG seems to return incorrect heating rates for the uppermost height layer. 
+        # Compute it manually instead:
+        spec_hum = h2ovmr_to_q(self.DS.h2o_vmr)
+        rho_v = convert_spechum_to_abshum(self.DS.temp, self.DS.pres*100., spec_hum)
+        rho = rho_air(self.DS.pres*100., self.DS.temp, rho_v)
+        for sky_cond in ['', 'c']:
+            for band in ['sw', 'lw']:
+                HR_ = compute_heating_rate(self.OUT_DS[f'{band}uflx{sky_cond}'], 
+                                           self.OUT_DS[f'{band}dflx{sky_cond}'], 
+                                           rho, self.DS.height_h, convert_to_K_day=True)
+                self.OUT_DS[f'{band}hr{sky_cond}'] = HR_
         
         
         # information about the variable names and their meanings: 

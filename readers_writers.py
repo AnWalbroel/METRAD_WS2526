@@ -1,3 +1,4 @@
+import pdb
 
 import numpy as np
 import csv
@@ -95,7 +96,6 @@ def read_default_profiles(scaling=None, offset=None):
         data_dict[var] = 0.5*(data_dict[var+"_h"][...,:-1] + data_dict[var+"_h"][...,1:])
     
     data_dict = apply_offset_and_scaling(data_dict, scaling, offset)
-    
     
     data_dict['h2o_vmr'] = q_to_h2ovmr(data_dict['h2o_vmr'])    # kg kg-1 to volume mixing ratio
     time = pd.to_datetime(data_dict['julian_day'], unit="D")
