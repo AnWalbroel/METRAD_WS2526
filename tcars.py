@@ -4,7 +4,6 @@ import pdb
 from collections import OrderedDict as odict
 
 import numpy as np
-from scipy import interpolate
 import xarray as xr
 import pyrrtmg as rrtmg
 

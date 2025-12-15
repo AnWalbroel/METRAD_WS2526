@@ -20,7 +20,7 @@ def main():
     path_output = "/mnt/f/heavy_data/METRAD_WS2526/rrtmg_output/"
     path_plots = "/mnt/f/Studium_NIM/work/Plots/METRAD_WS2526/"
     
-    set_dict = {'save_figures': False,       # if True: plot is only saved to file, not shown
+    set_dict = {'save_figures': True,       # if True: plot is only saved to file, not shown
                 }
     
     # scaling: to scale the parameters in read_default_profiles
@@ -66,19 +66,21 @@ def main():
     tcars_client = tcars(path_tcars_data=path_data['tcars_data'], DS=DS)
 
 
-    suffix = "_q01"
+    suffix = "_q01"         # REMEMBER TO RENAME YOUR OUTPUT !!
     subtask = ""            # e.g., "a", "b", ...
     
     # DATA MODIFICATIONS:
-    tcars_client.iflag_co2_vmr = 0      # adjust for question 02; for valid values, see tcars.py.__init__
+    tcars_client.iflag_co2_vmr = 0      # adjust for question 02; (for valid values, see tcars.py.__init__)
     # tcars_client.DS['temp_h'][...,0] += 20.     # question 04b
-    # for var in ['alb_dir_uv', 'alb_dif_uv', 'alb_dir_nir', 'alb_dif_nir']:    # question 05
-    #     tcars_client.DS[var][:] = 0.3           # question 05
+    for var in ['alb_dir_uv', 'alb_dif_uv', 'alb_dir_nir', 'alb_dif_nir']:    # question 05
+        tcars_client.DS[var][:] = 0.2           # question 05
     
     cloudtypes = []     # for questions 6-9, use ['liquid']
                         # for question 10: use ['ice']
                         # for question 11: use ['liquid', 'ice']
                         # for questions 12-14: use whatever required of the task
+    cloud_height = np.array([2000., 3000.])    # lower and upper limit of cloud layer; 
+                                               # modify accordingly for questions 06 - 14
     new_cloud_vars, cloudvar = define_cloud(cloudtypes)
 
     OUT_DS_list = list()
@@ -87,7 +89,7 @@ def main():
     for k in tqdm(range(len(new_cloud_vars[cloudvar]))):
         
         for key, var in new_cloud_vars.items():
-            tcars_client.DS[key].loc[{'height': slice(5000.,6000.)}][...] = var[k]
+            tcars_client.DS[key].loc[{'height': slice(cloud_height[0],cloud_height[1])}][...] = var[k]
         
         
         tcars_client.set_rrtmg_input()
@@ -98,9 +100,10 @@ def main():
         OUT_DS_list.append(OUT_DS)
         
         if np.any(np.abs(new_cloud_vars[cloudvar][k] - np.array([0., 30., 100., 500.])) == 0.):
-            subtask = pls.panel_marker[count]
+            if len(new_cloud_vars[cloudvar]) > 1: subtask = pls.panel_marker[count]
             print(f"TASK{suffix}{subtask}\nBudget surface: {OUT_DS.NET_SFC:.1f} W m-2\n" +
                   f"Budget TOA: {OUT_DS.NET_TOA:.1f} W m-2\nBudget atmosphere: {OUT_DS.NET_ATM:.1f} W m-2\n")
+            
             
             plot_heating_rates(tcars_client.OUT_DS, 
                                filename=f"metrad_heating_rates_sw_lw{suffix}{subtask}.png",
@@ -117,18 +120,19 @@ def main():
             count += 1
     
     OUT_DS_all = xr.concat(OUT_DS_list, dim=cloudvar).assign_coords({cloudvar: ([cloudvar], new_cloud_vars[cloudvar])})
-    plot_transmission_direct_diffuse_rad_lwp(OUT_DS_all, 
-                                             xaxis_data=cloudvar,
-                                             filename=f"metrad_transmission{suffix}.png",
-                                             path=path_plots,
-                                             **set_dict)
+    if len(OUT_DS_all[cloudvar]) > 1:
+        plot_transmission_direct_diffuse_rad_lwp(OUT_DS_all, 
+                                                 xaxis_data=cloudvar,
+                                                 filename=f"metrad_transmission{suffix}.png",
+                                                 path=path_plots,
+                                                 **set_dict)
     
     
 def define_cloud(cloudtypes: list):
     
     cloudvars = {'liquid': 'lwp', 'ice': 'iwp'}
     re_cloud = {'lwp': 're_liq', 'iwp': 're_ice'}
-    re_value = {'liquid': 5., 'ice': 30.}
+    re_value = {'liquid': 5., 'ice': 30.}   # effective radii in um (micrometres)
     
     def fill_cloud_data(
         new_cloud_vars: dict, 
@@ -138,6 +142,8 @@ def define_cloud(cloudtypes: list):
         re_=5.):
         
         new_cloud_vars[cloudvar] = np.arange(0., lwp_iwp_lim, 10.)
+        if isinstance(new_cloud_vars[cloudvar], (float, int)):
+            new_cloud_vars[cloudvar] = np.array([new_cloud_vars[cloudvar]])
         new_cloud_vars['clc'] = np.full(new_cloud_vars[cloudvar].shape, cloud_fraction)
         new_cloud_vars[re_cloud[cloudvar]] = np.full(new_cloud_vars[cloudvar].shape, re_)
         
