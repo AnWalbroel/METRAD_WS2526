@@ -306,7 +306,7 @@ class tcars:
         return props
     
     
-    def set_emissivity(self):
+    def set_emissivity(self, custom_emissivity=0.9837):
         
         """
         Emissivity: 16 bands in longwave, see 
@@ -321,10 +321,10 @@ class tcars:
         if self.iflag_emissivity == -1:
             emis_val = 1.0
         elif self.iflag_emissivity == 0:
-            emis_val = 0.996
+            emis_val = 0.996            # as in Thielke et al. 2022, https://doi.org/10.1038/s41597-022-01461-9
         elif self.iflag_emissivity == 1:
             # define your own emissivity array of emis_shape or use the following:
-            emis_val = 0.9837
+            emis_val = custom_emissivity
         self.emis = np.ones(emis_shape, **array_kwargs) * emis_val
     
     
